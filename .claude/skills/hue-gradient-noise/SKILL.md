@@ -42,6 +42,11 @@ Effects:
 Options: `--duration`, `--fps` (default 40), `--speed` (flow rate), `--octaves`
 (detail), `--sat`.
 
+**Principal mode (default).** Like `hue-principal-sync`, ALL lights show **one
+principal color** (sampled from channel 0) that flows over time — every light is
+identical. Add **`--per-light`** to instead give each light its own noise sample
+(multicolor: the `spatial`/`warp` effects then visibly differ across the room).
+
 ## Music-reactive variant
 Add `--music` (optionally `--source <pulse monitor>`): audio captured from the
 system output (via `parec`) **modulates** the noise instead of replacing it —

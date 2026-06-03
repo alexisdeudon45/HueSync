@@ -35,10 +35,12 @@ Options:
 - `--duration`.
 
 ## How it maps
-The 7 entertainment channels get the 7 left-to-right screen zones in order. On this
-dual-monitor desktop, the left lights follow DP-1 and the right lights follow HDMI-1.
-To make it physically accurate, arrange the lights' positions in the Hue app to match
-the room; the zone order is purely left→right here.
+**Principal mode (default):** one color = the **whole-screen average**, shown on
+**every** light (consistent with `hue-principal-sync` / `hue-gradient-noise`).
+
+**`--zones`:** the 7 channels get 7 left→right screen zones instead — left lights
+follow DP-1, right lights follow HDMI-1 (true ambilight). Arrange the lights'
+positions in the Hue app to match the room for accuracy; zone order is left→right.
 
 ## Notes / requirements
 - **X11 only** (this session is XFCE/X11 — perfect). On Wayland, mss won't work; you'd

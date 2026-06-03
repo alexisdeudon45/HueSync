@@ -39,6 +39,8 @@ def main():
     ap.add_argument("--gamma", type=float, default=0.8, help="<1 brightens dim screens")
     ap.add_argument("--smooth", type=float, default=0.5, help="EMA factor 0..1 (higher=smoother/slower)")
     ap.add_argument("--step", type=int, default=8, help="pixel subsample stride (bigger=faster, coarser)")
+    ap.add_argument("--zones", action="store_true",
+                    help="per-light left->right zones (default: one principal/average color on ALL lights)")
     args = ap.parse_args()
 
     n = len(CHANNELS)
@@ -57,11 +59,16 @@ def main():
                 img = np.frombuffer(shot.rgb, dtype=np.uint8).reshape(shot.height, shot.width, 3)
                 img = img[::args.step, ::args.step]            # subsample for speed
                 w = img.shape[1]
-                colors = []
-                for i in range(n):
-                    zone = img[:, w * i // n: max(w * i // n + 1, w * (i + 1) // n)]
-                    avg = tuple(int(c) for c in zone.reshape(-1, 3).mean(axis=0))
-                    colors.append(boost_sat(avg, args.sat, args.gamma))
+                if args.zones:
+                    colors = []
+                    for i in range(n):
+                        zone = img[:, w * i // n: max(w * i // n + 1, w * (i + 1) // n)]
+                        avg = tuple(int(c) for c in zone.reshape(-1, 3).mean(axis=0))
+                        colors.append(boost_sat(avg, args.sat, args.gamma))
+                else:
+                    # Default: one principal color = whole-screen average, on every light.
+                    avg = tuple(int(c) for c in img.reshape(-1, 3).mean(axis=0))
+                    colors = [boost_sat(avg, args.sat, args.gamma)] * n
                 if prev is not None:
                     a = args.smooth
                     colors = [tuple(int(a * p + (1 - a) * c) for p, c in zip(pc, cc))

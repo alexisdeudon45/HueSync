@@ -100,6 +100,8 @@ def main():
     ap.add_argument("--sat", type=float, default=1.0, help="saturation 0..1")
     ap.add_argument("--music", action="store_true", help="modulate the noise with system audio")
     ap.add_argument("--source", default=None, help="audio monitor source (default: default sink monitor)")
+    ap.add_argument("--per-light", action="store_true",
+                    help="give each light its own color (default: one principal color shared by ALL lights)")
     args = ap.parse_args()
 
     audio = None
@@ -125,8 +127,7 @@ def main():
                     speed *= 1.0 + 3.0 * audio.rms
                     hue_shift = 0.3 * min(1.0, audio.treble / 3.0)
                     vboost = min(0.6, 2.5 * audio.rms) + 0.4 * audio.onset
-                colors = []
-                for i in range(n):
+                def channel_color(i):
                     pos = i / max(1, n - 1)
                     if args.effect == "noise":
                         h = unit(fbm(GEN_H, t * speed, i * 1.3, args.octaves))
@@ -145,7 +146,14 @@ def main():
                     sat = max(0.0, min(1.0, args.sat * (0.6 + 0.4 * sv)))
                     val = max(0.0, min(1.0, 0.35 + 0.55 * v + vboost))
                     r, g, b = colorsys.hsv_to_rgb(hue, sat, val)
-                    colors.append((int(r * 255), int(g * 255), int(b * 255)))
+                    return (int(r * 255), int(g * 255), int(b * 255))
+
+                # Default: one PRINCIPAL color (channel 0) shared by every light.
+                # --per-light gives each light its own sample (the old behaviour).
+                if args.per_light:
+                    colors = [channel_color(i) for i in range(n)]
+                else:
+                    colors = [channel_color(0)] * n
                 if not s.send(colors):
                     print("stream closed early; see /tmp/huestream_openssl.log", file=sys.stderr)
                     break
