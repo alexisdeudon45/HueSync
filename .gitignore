@@ -9,3 +9,6 @@ wheels/
 # Virtual environments
 .venv
 .vscode/mcp.json
+
+# Claude Code local settings (machine-specific, may contain secrets)
+.claude/settings.local.json
