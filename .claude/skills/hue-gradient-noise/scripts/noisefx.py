@@ -102,6 +102,10 @@ def main():
     ap.add_argument("--source", default=None, help="audio monitor source (default: default sink monitor)")
     ap.add_argument("--per-light", action="store_true",
                     help="give each light its own color (default: one principal color shared by ALL lights)")
+    ap.add_argument("--hue-drift", type=float, default=0.0,
+                    help="OPTIONAL non-noise ramp that sweeps the wheel (cycles/sec). Default 0 = hue is PURE noise")
+    ap.add_argument("--hue-gain", type=float, default=4.0,
+                    help="how far the noise pushes the hue around the wheel; >=3 wraps the full spectrum from noise alone")
     args = ap.parse_args()
 
     audio = None
@@ -130,21 +134,22 @@ def main():
                 def channel_color(i):
                     pos = i / max(1, n - 1)
                     if args.effect == "noise":
-                        h = unit(fbm(GEN_H, t * speed, i * 1.3, args.octaves))
+                        h = fbm(GEN_H, t * speed, i * 1.3, args.octaves)           # raw ~[-1,1]
                         sv = unit(fbm(GEN_S, t * speed, 50 + i * 1.3, args.octaves))
                         v = unit(fbm(GEN_V, t * speed, 99 + i * 1.3, args.octaves))
                     elif args.effect == "spatial":
-                        h = unit(fbm(GEN_H, pos * 2.0, t * speed, args.octaves))
+                        h = fbm(GEN_H, pos * 2.0, t * speed, args.octaves)
                         sv = unit(fbm(GEN_S, pos * 2.0 + 10, t * speed, args.octaves))
                         v = unit(fbm(GEN_V, pos * 2.0 + 20, t * speed, args.octaves))
                     else:  # warp
                         q = fbm(GEN_W, pos * 2.0, t * speed, args.octaves)
-                        h = unit(fbm(GEN_H, pos * 2.0 + q, t * speed + q, args.octaves))
+                        h = fbm(GEN_H, pos * 2.0 + q, t * speed + q, args.octaves)
                         sv = unit(fbm(GEN_S, pos * 2.0 + q + 5, t * speed, args.octaves))
                         v = unit(fbm(GEN_V, pos * 2.0 + q + 9, t * speed, args.octaves))
-                    hue = (h + hue_shift) % 1.0
-                    sat = max(0.0, min(1.0, args.sat * (0.6 + 0.4 * sv)))
-                    val = max(0.0, min(1.0, 0.35 + 0.55 * v + vboost))
+                    # Sweep the FULL wheel (t*drift) + organic wobble from the noise (gain*h).
+                    hue = (t * args.hue_drift + args.hue_gain * h + hue_shift) % 1.0
+                    sat = max(0.0, min(1.0, args.sat * (0.7 + 0.3 * sv)))
+                    val = max(0.0, min(1.0, 0.4 + 0.5 * v + vboost))
                     r, g, b = colorsys.hsv_to_rgb(hue, sat, val)
                     return (int(r * 255), int(g * 255), int(b * 255))
 

@@ -26,8 +26,16 @@ ideal for lighting:
 - **Multi-dimensional**: 1D `noise(t)` for time evolution; 2D `noise(position, t)`
   for effects that are coherent *across* the lights.
 
-This skill maps noise to **HSV**: independent noise channels feed hue, saturation
-and value, so each light "breathes" organically.
+This skill maps noise to **HSV**: independent Simplex/fBm channels feed hue,
+saturation and value, so each light "breathes" organically.
+
+**Honest note on hue:** gradient noise is *centred* (values cluster near the
+middle), so naively mapping noise→hue gives only a narrow green/blue band. We fix
+this the pure-noise way — a **hue gain** (`--hue-gain`, default 4) so the noise
+excursion wraps the whole color wheel (`mod 1`), covering the full spectrum from
+noise alone. Hue, saturation and value are all genuine gradient noise. There is
+also an optional `--hue-drift` (default 0) that adds a *non-noise* linear sweep of
+the wheel — leave it at 0 to keep everything pure noise.
 
 ## Run it
 ```
