@@ -48,7 +48,8 @@ def main():
     prev = None
     with mss.MSS() as sct, HueStream() as s:
         mon = sct.monitors[args.monitor]
-        print(f"capturing monitor[{args.monitor}] {mon['width']}x{mon['height']} -> {n} zones")
+        mode = f"{n} left->right zones" if args.zones else "whole-screen average (1 principal color on all lights)"
+        print(f"capturing monitor[{args.monitor}] {mon['width']}x{mon['height']} -> {mode}")
         t0 = time.monotonic(); frames = 0
         try:
             while True:
