@@ -26,6 +26,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(__file__))
 from huestream import HueStream, CHANNELS  # noqa
+from color_calib import STREAM  # noqa  shared calibration (Entertainment-path anchors)
 
 import numpy as np  # noqa
 import mss  # noqa
@@ -82,6 +83,11 @@ def main():
                          "target over roughly this long (framerate-independent). Bigger = slower, "
                          "calmer transitions; smaller = snappier. 0 disables smoothing (instant).")
     ap.add_argument("--step", type=int, default=8, help="pixel subsample stride (bigger=faster, coarser)")
+    ap.add_argument("--raw", action="store_true",
+                    help="send the dominant color as-is. By default the color is run through the "
+                         "measured stream calibration (color_calib.STREAM) so the room shows the "
+                         "intended hue — the lamp+room bend hues (e.g. green drifts toward cyan), and "
+                         "this corrects for it. Use --raw to disable and stream the literal color.")
     args = ap.parse_args()
 
     n = len(CHANNELS)
@@ -126,7 +132,10 @@ def main():
                     color = target if color is None else ease_hsv(color, target, alpha)
 
                 if color is not None:
-                    if not s.send([color] * n):
+                    # Correct the hue so the room actually shows it (lamp/room bend hues);
+                    # saturation & brightness are preserved. --raw streams the literal color.
+                    out = color if args.raw else STREAM.correct_rgb(color)
+                    if not s.send([out] * n):
                         print("stream closed early; see /tmp/huestream_openssl.log", file=sys.stderr)
                         break
                 frames += 1

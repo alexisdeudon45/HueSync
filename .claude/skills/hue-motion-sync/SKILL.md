@@ -67,6 +67,17 @@ color leads the whole room, consistent with `hue-principal-sync` / `hue-screen-s
 principal mode. This skill does not do per-light left→right zones; if you want true
 left/right ambilight, use `hue-screen-sync --zones`.
 
+## Color calibration (on by default)
+The lamps + room don't show a streamed color faithfully — hues bend (notably green drifts
+toward cyan) and the bend differs from the REST path. By default the dominant color is run
+through `color_calib.STREAM.correct_rgb` (a shared module, calibrated by sweeping the hue
+wheel over the Entertainment stream and reading the room back with the webcam) so the room
+shows the intended hue; saturation and brightness are preserved. Hues that can't be rendered
+(the green/yellow-green band) are streamed unchanged rather than distorted. Pass `--raw` to
+disable correction and stream the literal dominant color. The calibration constants
+(`STREAM_ANCHORS` in `color_calib.py`) are specific to this room+webcam; re-measure if they
+change. The same module (REST anchors) powers `hue-room-illumination/solve_couleur.py`.
+
 ## Notes / requirements
 - **X11 only** (this session is XFCE/X11). On Wayland, mss won't work; capture via
   `grim`/PipeWire portal instead.

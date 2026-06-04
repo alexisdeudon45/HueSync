@@ -42,6 +42,8 @@ $PY scripts/solve_couleur.py 30               # target room HUE in degrees
 $PY scripts/solve_couleur.py blue --apply     # also set the room
 $PY scripts/solve_couleur.py orange --verify  # set it, then capture+score to confirm
 ```
+The calibration math lives in the shared `scripts/color_calib.py` (REST anchors here; the
+same module with STREAM anchors is used by `hue-motion-sync` to correct its streamed colors).
 It reports the predicted room hue, a **residual** (how faithfully that hue can be rendered —
 a big residual flags unrenderable targets like true yellow-greens, which collapse into the
 "green attractor"), and the **expected illuminated %** so you know up front if a hue can fill
