@@ -77,7 +77,10 @@ def main():
             return 0
         if args.auto:
             set_ctrl(fd, AUTO_WHITE_BALANCE, 1)
-            set_ctrl(fd, EXPOSURE_AUTO, 0)
+            # EXPOSURE_AUTO is a menu; cameras vary in which "auto" they expose. Many accept
+            # 3 (aperture priority) but reject 0 (auto). Try the common ones in order.
+            if not (set_ctrl(fd, EXPOSURE_AUTO, 3) or set_ctrl(fd, EXPOSURE_AUTO, 0)):
+                print("  (could not restore auto exposure; set it in your camera app)", file=sys.stderr)
             print("camera back to auto white-balance + auto exposure")
             return 0
         # Order matters: disable the auto control before setting the manual value.
