@@ -18,7 +18,7 @@ serializes commands internally and the floor is the device.
 Run it:
 
 ```
-/home/tor/hue/hue-mcp/hue-mcp/.venv/bin/python scripts/bench.py
+/home/tor/hue-mcp/.venv/bin/python scripts/bench.py
 ```
 
 For N = 1, 3, 5, 7 lights it times an all-lights color change two ways

@@ -39,10 +39,10 @@ Run it with the HueSync project's Python (which has `phue` installed), from the
 skill directory:
 
 ```
-/home/tor/hue/hue-mcp/hue-mcp/.venv/bin/python scripts/principal_sync.py [flags]
+/home/tor/hue-mcp/.venv/bin/python scripts/principal_sync.py [flags]
 ```
 
-(If that venv ever moves, `uv run --project /home/tor/hue/hue-mcp/hue-mcp python
+(If that venv ever moves, `uv run --project /home/tor/hue-mcp python
 scripts/principal_sync.py` also works.)
 
 It connects with the saved HueSync credentials (`~/.hue-mcp/config.json`), picks
@@ -87,7 +87,7 @@ the Hue **Entertainment streaming API** (HueStream 2.0 over DTLS, UDP 2100) to
 the "Home Entertainment" area and hits ~45–50 fps across all 7 lights:
 
 ```
-/home/tor/hue/hue-mcp/hue-mcp/.venv/bin/python scripts/hue_stream.py [flags]
+/home/tor/hue-mcp/.venv/bin/python scripts/hue_stream.py [flags]
 ```
 
 Effects: `--effect rainbow|wave|strobe|pulse|solid`, `--color r,g,b` (base for

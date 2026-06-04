@@ -20,7 +20,7 @@ result to the Home Entertainment area.
 
 ## Run it
 ```
-DISPLAY=:1.0 /home/tor/hue/hue-mcp/hue-mcp/.venv/bin/python scripts/screensync.py [opts]
+DISPLAY=:1.0 /home/tor/hue-mcp/.venv/bin/python scripts/screensync.py [opts]
 ```
 (`DISPLAY=:1.0` is this machine's XFCE session — needed only if running detached.)
 

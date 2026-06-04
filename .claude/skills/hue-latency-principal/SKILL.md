@@ -18,7 +18,7 @@ principal has a latency cost.
 Run it:
 
 ```
-/home/tor/hue/hue-mcp/hue-mcp/.venv/bin/python scripts/bench.py
+/home/tor/hue-mcp/.venv/bin/python scripts/bench.py
 ```
 
 Writes `report.html` (+ `report.json`) to

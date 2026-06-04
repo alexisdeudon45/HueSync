@@ -26,7 +26,7 @@ the Entertainment API. Brightness is maxed by default so the room stays bright.
 
 ## Run it
 ```
-DISPLAY=:1.0 /home/tor/hue/hue-mcp/hue-mcp/.venv/bin/python scripts/motionsync.py [opts]
+DISPLAY=:1.0 /home/tor/hue-mcp/.venv/bin/python scripts/motionsync.py [opts]
 ```
 (`DISPLAY=:1.0` is this machine's XFCE session — needed when running detached.)
 
@@ -67,7 +67,7 @@ left/right ambilight, use `hue-screen-sync --zones`.
 - **X11 only** (this session is XFCE/X11). On Wayland, mss won't work; capture via
   `grim`/PipeWire portal instead.
 - Dependencies: `numpy`, `mss`. Use the venv at
-  `/home/tor/hue/hue-mcp/hue-mcp/.venv/bin/python` (already has them), or
+  `/home/tor/hue-mcp/.venv/bin/python` (already has them), or
   `uv pip install numpy mss`.
 - Streaming credentials in `~/.hue-mcp/stream.json`; DTLS via `openssl`
   (`scripts/huestream.py`).

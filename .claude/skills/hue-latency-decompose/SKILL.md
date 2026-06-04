@@ -19,7 +19,7 @@ counters, and compares against pure ICMP RTT so you can see how little is the LA
 Run it:
 
 ```
-/home/tor/hue/hue-mcp/hue-mcp/.venv/bin/python scripts/bench.py
+/home/tor/hue-mcp/.venv/bin/python scripts/bench.py
 ```
 
 Components reported (mean ms + % of total):

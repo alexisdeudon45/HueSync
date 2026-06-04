@@ -39,7 +39,7 @@ the wheel — leave it at 0 to keep everything pure noise.
 
 ## Run it
 ```
-/home/tor/hue/hue-mcp/hue-mcp/.venv/bin/python scripts/noisefx.py --effect <e> [opts]
+/home/tor/hue-mcp/.venv/bin/python scripts/noisefx.py --effect <e> [opts]
 ```
 Effects:
 - **`noise`** — per-light 1D fBm over time; each light evolves independently.
