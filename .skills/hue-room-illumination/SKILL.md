@@ -30,6 +30,24 @@ PY=/home/tor/hue-mcp/.venv/bin/python
 - `scripts/hue_eval.py`   — **the eval**: capture the room + score it against a target color
 - `scripts/set_room.py`   — set the whole Home group (principal + followers) to an RGB + brightness
 - `scripts/lock_camera.py`— freeze the webcam's auto white-balance & exposure (do this first!)
+- `scripts/solve_couleur.py` — **the calibrated shortcut**: desired room color → the RGB to command
+
+## Shortcut: solve_couleur (skip the loop once calibrated)
+Once you've characterized the room (see "Deriving the formula" below), `solve_couleur.py`
+turns a desired room color straight into the lamp command, so you don't re-run the loop
+every time. It encodes the measured hue-transfer (inverted) and per-hue brightness gain:
+```
+$PY scripts/solve_couleur.py green            # prints the RGB to send + predicted result
+$PY scripts/solve_couleur.py 30               # target room HUE in degrees
+$PY scripts/solve_couleur.py blue --apply     # also set the room
+$PY scripts/solve_couleur.py orange --verify  # set it, then capture+score to confirm
+```
+It reports the predicted room hue, a **residual** (how faithfully that hue can be rendered —
+a big residual flags unrenderable targets like true yellow-greens, which collapse into the
+"green attractor"), and the **expected illuminated %** so you know up front if a hue can fill
+the room (red/orange/blue ≈ 0.5–0.6; green/cyan ≈ 0.22). The calibration constants
+(`ANCHORS`) are specific to this room + webcam at the locked WB/exposure — re-measure and
+update them if any of those change.
 
 ## Step 0 — lock the camera (this is not optional)
 A webcam constantly re-adjusts auto-white-balance and auto-exposure. When you flood the
@@ -87,6 +105,24 @@ palest version that still passes the color check. Measured here (camera locked):
   output is dim so the room caps around half-lit, and any desaturation just turns it
   purple/white — coverage went up but the color check failed.
 So the right answer is color-dependent; that's exactly why you measure instead of guessing.
+
+## Deriving the formula (how solve_couleur's constants were measured)
+The lamp is driven by chromaticity (xy) + a separate `bri`, so `rgb_to_xy` throws away RGB
+magnitude — scaling a single channel of a pure color does nothing (verified: sweeping one
+channel 255→20 left illumination/hue/purity flat). Only the RGB *ratio* (hue+saturation) and
+`bri` matter. To characterize the room, lock the camera, then sweep the hue wheel at full
+saturation / `bri` 254 and record, per commanded hue, the resulting `mean_lit_hue` and
+`illuminated_pct`:
+```
+for h in 0 30 60 ... 330: set_room.py --rgb <hsv(h,1,1)>; hue_eval.py --target <same> --json
+```
+That gives two curves: the **hue transfer** room=T(commanded) and the **gain** g(commanded).
+Findings here: T is near-identity except a "green attractor" (commanded ~75–115 collapse to
+~143°, so true yellow-greens are unrenderable) and a warm pull (oranges drift toward red);
+g is high for red/orange/blue (~0.5–0.6) and low for green/cyan (~0.22). `solve_couleur.py`
+stores these as `ANCHORS`, inverts T (skipping the unstable band), and reports g. Re-run this
+sweep and update `ANCHORS` whenever the room, camera, or lock changes — it's fitted data, not
+a universal constant.
 
 ## Notes
 - `set_room.py` drives the whole Home group (`HOME_GROUP=81`, lights `43,47–52`) in one
