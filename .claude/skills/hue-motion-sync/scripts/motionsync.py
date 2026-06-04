@@ -19,6 +19,7 @@ Runs on the live X11 session (XFCE here). Set DISPLAY if running detached, e.g.
 """
 import argparse
 import colorsys
+import math
 import os
 import sys
 import time
@@ -41,6 +42,27 @@ def to_max_bright(rgb, sat, max_bright):
     return (int(r * 255), int(g * 255), int(b * 255))
 
 
+def ease_hsv(cur, target, alpha):
+    """Move cur a fraction alpha toward target, interpolating hue the SHORT way
+    around the color wheel. Blending in HSV (not RGB) keeps the transition a clean
+    gradient sweep through real hues (red->green via orange/yellow) instead of the
+    muddy greys you get averaging RGB; the shortest-arc hue avoids spinning the long
+    way round. alpha is the per-frame step from the time constant, so the color
+    eases into the target smoothly rather than snapping."""
+    ch, cs, cv = colorsys.rgb_to_hsv(*[x / 255.0 for x in cur])
+    th, ts, tv = colorsys.rgb_to_hsv(*[x / 255.0 for x in target])
+    dh = th - ch
+    if dh > 0.5:
+        dh -= 1.0
+    elif dh < -0.5:
+        dh += 1.0
+    h = (ch + alpha * dh) % 1.0
+    s = cs + alpha * (ts - cs)
+    v = cv + alpha * (tv - cv)
+    r, g, b = colorsys.hsv_to_rgb(h, s, v)
+    return (int(r * 255), int(g * 255), int(b * 255))
+
+
 def main():
     ap = argparse.ArgumentParser(description="Motion-color ambilight -> Hue principal light")
     ap.add_argument("--duration", type=float, default=0.0, help="seconds; 0 = run until stopped")
@@ -55,23 +77,29 @@ def main():
     ap.add_argument("--sat", type=float, default=1.4, help="saturation boost (1=raw)")
     ap.add_argument("--no-max-bright", action="store_true",
                     help="keep the dominant color's own brightness instead of forcing max")
-    ap.add_argument("--smooth", type=float, default=0.6,
-                    help="EMA factor 0..1 (higher=smoother/slower); the changed-pixel color is "
-                         "jumpy frame-to-frame, so some smoothing keeps the room calm")
+    ap.add_argument("--tau", type=float, default=0.8,
+                    help="smoothing time constant in SECONDS: the color eases toward each new "
+                         "target over roughly this long (framerate-independent). Bigger = slower, "
+                         "calmer transitions; smaller = snappier. 0 disables smoothing (instant).")
     ap.add_argument("--step", type=int, default=8, help="pixel subsample stride (bigger=faster, coarser)")
     args = ap.parse_args()
 
     n = len(CHANNELS)
     dt = 1.0 / args.fps
+    # Per-frame easing step from the time constant: alpha = 1 - e^(-dt/tau).
+    # This is the fraction of the remaining gap we close each frame; deriving it from
+    # dt makes the smoothing speed the same whatever the capture rate.
+    alpha = 1.0 if args.tau <= 0 else 1.0 - math.exp(-dt / args.tau)
     max_bright = not args.no_max_bright
     prev_frame = None        # last captured frame (for the diff)
-    color = None             # last dominant color sent (smoothed, persists on static screens)
+    target = None            # latest dominant color from changed pixels (the goal)
+    color = None             # smoothed color actually streamed (eases toward target)
 
     with mss.MSS() as sct, HueStream() as s:
         mon = sct.monitors[args.monitor]
         print(f"capturing monitor[{args.monitor}] {mon['width']}x{mon['height']} -> "
               f"changed-pixel dominant color on all lights "
-              f"(threshold={args.threshold}, max_bright={max_bright})")
+              f"(threshold={args.threshold}, max_bright={max_bright}, tau={args.tau}s)")
         t0 = time.monotonic(); frames = 0; still = 0
         try:
             while True:
@@ -85,18 +113,17 @@ def main():
                 if prev_frame is not None and prev_frame.shape == img.shape:
                     diff = np.abs(img - prev_frame).max(axis=2)        # biggest channel move per pixel
                     mask = diff > args.threshold
-                    changed = mask.sum()
-                    if changed >= args.min_frac * mask.size:
+                    if mask.sum() >= args.min_frac * mask.size:
                         avg = tuple(int(c) for c in img[mask].mean(axis=0))
-                        target = to_max_bright(avg, args.sat, max_bright)
-                        if color is None:
-                            color = target
-                        else:                                          # temporal smoothing
-                            a = args.smooth
-                            color = tuple(int(a * p + (1 - a) * c) for p, c in zip(color, target))
+                        target = to_max_bright(avg, args.sat, max_bright)   # new goal
                     else:
-                        still += 1                                     # too static; keep last color
+                        still += 1                                     # too static; keep last target
                 prev_frame = img
+
+                # Ease toward the target every frame (even on static frames) so the color
+                # glides into place as a smooth gradient instead of jumping when it changes.
+                if target is not None:
+                    color = target if color is None else ease_hsv(color, target, alpha)
 
                 if color is not None:
                     if not s.send([color] * n):

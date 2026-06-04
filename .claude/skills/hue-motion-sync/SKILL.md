@@ -49,8 +49,12 @@ black, so a paused screen doesn't kill the lights.
 - `--no-max-bright` — keep the dominant color's own brightness instead of forcing it to
   max. By default brightness is maxed (the dominant hue is kept, its HSV value set to 1.0).
 - `--sat` (default 1.4) — saturation boost so the lights show color, not washed-out white.
-- `--smooth` (0..1, default 0.6) — temporal EMA. The changed-pixel color is jumpy
-  frame-to-frame; smoothing keeps the room calm. Higher = smoother/slower.
+- `--tau` (seconds, default 0.8) — smoothing time constant. When the dominant color
+  changes, the lights *ease* toward it over roughly this long instead of snapping, so
+  transitions are smooth gradients. Bigger = slower/calmer, smaller = snappier, `0` =
+  instant (no smoothing). Framerate-independent. The blend happens in HSV along the
+  shortest hue arc, so a change like red→green sweeps through orange/yellow rather than
+  passing through muddy grey (which is what blending RGB directly would do).
 - `--fps` (default 18; capture-bound, ~14-20 for the full 3840×1080).
 - `--monitor` — `0` = all screens combined (default), or `1`/`2` for a single monitor
   (mss indices).
